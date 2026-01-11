@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Engineering Camera | Pro</title>
+    
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        dark: { 950: '#09090b', 900: '#18181b', 800: '#27272a', 700: '#3f3f46' },
+                        amber: { 500: '#f59e0b' }
+                    },
+                    fontFamily: {
+                        sans: ['"Outfit"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    screens: {
+                        'pwa': {'raw': '(display-mode: standalone)'}
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* iOS Layout Fixes */
+        :root {
+            --sat: env(safe-area-inset-top);
+            --sab: env(safe-area-inset-bottom);
+            --sal: env(safe-area-inset-left);
+            --sar: env(safe-area-inset-right);
+        }
+
+        body { 
+            background-color: #000; 
+            color: white; 
+            /* Fix iOS scroll bounce */
+            position: fixed; 
+            top: 0; left: 0; right: 0; bottom: 0;
+            overflow: hidden; 
+            touch-action: none; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100dvh; /* Dynamic Viewport Height */
+            margin: 0;
+        }
+        
+        #app-container {
+            width: 100%;
+            height: 100%;
+            background-color: #09090b;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            /* Safe Area Padding */
+            padding-top: var(--sat);
+            padding-bottom: var(--sab);
+            padding-left: var(--sal);
+            padding-right: var(--sar);
+        }
+
+        @media (min-width: 768px) {
+            #app-container {
+                max-width: 430px;
+                max-height: 900px;
+                height: 95vh;
+                border-radius: 40px;
+                border: 8px solid #333;
+                box-shadow: 0 0 50px rgba(0,0,0,0.5);
+                /* Reset padding for desktop emulation */
+                padding: 0; 
+            }
+        }
+
+        .bg-grid-pattern {
+            background-image: linear-gradient(to right, #27272a 1px, transparent 1px),
+                              linear-gradient(to bottom, #27272a 1px, transparent 1px);
+            background-size: 40px 40px; opacity: 0.1;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        [contenteditable]:focus { outline: none; border-bottom: 1px solid #f59e0b; background-color: rgba(0,0,0,0.2); }
+        .animate-flash { animation: flash 0.15s ease-out; }
+        @keyframes flash { 0% { opacity: 0.8; background: white; } 100% { opacity: 0; background: transparent; } }
+        
+        .processing-dot { width: 8px; height: 8px; background-color: #f59e0b; border-radius: 50%; animation: pulse 1s infinite; display: inline-block; margin-left: 5px; }
+        
+        /* 廣告區塊樣式 */
+        .ad-banner-slot {
+            background-color: #27272a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #71717a;
+            font-size: 10px;
+            font-family: monospace;
+            overflow: hidden;
+            position: relative;
+        }
+        .ad-banner-slot::after {
+            content: "ADVERTISEMENT";
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            font-size: 8px;
+            background: rgba(0,0,0,0.5);
+            padding: 1px 3px;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+
+        <!-- ==================== VIEW: DASHBOARD ==================== -->
+        <div id="view-dashboard" class="h-full w-full flex flex-col p-6 gap-4">
+            <header class="flex justify-between items-center py-2 shrink-0">
+                <div>
+                    <h1 class="text-xl font-bold tracking-widest text-white">ENG. CAM</h1>
+                    <p id="dashboard-project-label" class="text-[10px] text-amber-500 font-mono mt-1">CURRENT: DEFAULT</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div id="processing-indicator" class="hidden flex items-center gap-1">
+                        <span class="text-[10px] text-amber-500 font-mono">AI WORKING</span>
+                        <div class="processing-dot"></div>
+                    </div>
+                    <div class="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
+                </div>
+            </header>
+
+            <main class="flex-1 flex flex-col gap-4 overflow-hidden min-h-0">
+                <!-- Camera Entry -->
+                <div onclick="switchView('camera')" class="flex-[2] relative group bg-dark-900 border border-dark-800 rounded-[2rem] overflow-hidden flex flex-col items-center justify-center cursor-pointer active:scale-[0.98] transition-transform">
+                    <div class="absolute inset-0 bg-grid-pattern"></div>
+                    <div class="absolute inset-0 bg-gradient-to-b from-transparent to-black/60"></div>
+                    
+                    <div class="absolute top-6 left-6 w-4 h-4 border-t-2 border-l-2 border-white/20"></div>
+                    <div class="absolute top-6 right-6 w-4 h-4 border-t-2 border-r-2 border-white/20"></div>
+                    <div class="absolute bottom-6 left-6 w-4 h-4 border-b-2 border-l-2 border-white/20"></div>
+                    <div class="absolute bottom-6 right-6 w-4 h-4 border-b-2 border-r-2 border-white/20"></div>
+
+                    <div class="relative z-10 flex flex-col items-center gap-4">
+                        <div class="w-20 h-20 rounded-full border-2 border-white/10 bg-white/5 flex items-center justify-center">
+                            <i data-lucide="aperture" class="w-10 h-10 text-amber-500"></i>
+                        </div>
+                        <div class="text-center">
+                            <h2 class="text-3xl font-bold tracking-tight text-white">CAMERA</h2>
+                            <p class="text-xs text-gray-500 font-mono mt-1">START CAPTURE</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Grid -->
+                <div class="flex-1 grid grid-cols-2 gap-4 min-h-0">
+                    <div onclick="switchView('gallery')" class="relative bg-dark-900 border border-dark-800 rounded-[2rem] flex flex-col items-center justify-center gap-3 cursor-pointer active:scale-[0.98] transition-transform">
+                        <div class="p-4 rounded-2xl bg-dark-800 border border-dark-700">
+                            <i data-lucide="folder-open" class="w-6 h-6 text-gray-300"></i>
+                        </div>
+                        <div class="text-center">
+                            <h3 class="text-sm font-bold tracking-wider text-gray-300">GALLERY</h3>
+                            <p id="total-photos-count" class="text-[10px] text-gray-600 font-mono mt-0.5">0 ITEMS</p>
+                        </div>
+                    </div>
+
+                    <div onclick="switchView('settings')" class="relative bg-dark-900 border border-dark-800 rounded-[2rem] flex flex-col items-center justify-center gap-3 cursor-pointer active:scale-[0.98] transition-transform">
+                        <div class="p-4 rounded-2xl bg-dark-800 border border-dark-700">
+                            <i data-lucide="settings-2" class="w-6 h-6 text-gray-300"></i>
+                        </div>
+                        <div class="text-center">
+                            <h3 class="text-sm font-bold tracking-wider text-gray-300">SETTINGS</h3>
+                            <p class="text-[10px] text-gray-600 font-mono mt-0.5">AI & DATA</p>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- AD: Bottom Banner (Dashboard) -->
+            <div id="ad-banner-dashboard" class="ad-banner-slot h-14 rounded-xl border border-dark-800 shrink-0">
+                <span>BANNER AD SPACE (320x50)</span>
+            </div>
+        </div>
+
+        <!-- ==================== VIEW: CAMERA ==================== -->
+        <div id="view-camera" class="hidden absolute inset-0 z-50 bg-black flex flex-col">
+            <div class="absolute top-0 left-0 right-0 z-20 p-6 pt-8 flex justify-between items-start bg-gradient-to-b from-black/60 to-transparent pointer-events-none">
+                <button onclick="switchView('dashboard')" class="pointer-events-auto p-2 bg-black/40 backdrop-blur-md rounded-full text-white/80 border border-white/10 mt-safe">
+                    <i data-lucide="x" width="24"></i>
+                </button>
+                <div id="ai-status-badge" class="hidden bg-purple-500/20 px-2 py-1 rounded border border-purple-500/50 text-[10px] font-bold text-purple-400 flex items-center gap-1 mt-safe">
+                    <i data-lucide="zap" width="10"></i> AI AUTO
+                </div>
+            </div>
+
+            <div class="relative flex-1 bg-black flex items-center justify-center overflow-hidden">
+                <video id="camera-feed" class="absolute w-full h-full object-cover" autoplay playsinline muted></video>
+                
+                <!-- HUD -->
+                <div class="absolute inset-0 opacity-20 pointer-events-none">
+                    <div class="w-full h-1/3 border-b border-white absolute top-0"></div>
+                    <div class="w-full h-2/3 border-b border-white absolute top-0"></div>
+                    <div class="h-full w-1/3 border-r border-white absolute top-0 left-0"></div>
+                    <div class="h-full w-2/3 border-r border-white absolute top-0 left-0"></div>
+                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-amber-500/50 rounded-full"></div>
+                </div>
+
+                <!-- Info Overlay -->
+                <div class="absolute bottom-4 left-6 z-10 text-shadow-md w-3/4 mb-safe">
+                    <button onclick="openProjectSelector()" class="flex items-center gap-2 text-left mb-2 group pointer-events-auto">
+                        <i data-lucide="folder" width="16" class="text-amber-500"></i>
+                        <span id="cam-project-name" class="text-amber-400 font-bold text-xl font-heading uppercase tracking-wide border-b border-dashed border-transparent group-hover:border-amber-500 transition-colors">DEFAULT</span>
+                        <i data-lucide="chevron-down" width="14" class="text-amber-500/50"></i>
+                    </button>
+                    
+                    <div class="flex items-center gap-1.5 pointer-events-auto">
+                        <i data-lucide="map-pin" width="14" class="text-white/90"></i>
+                        <span id="cam-overlay-location" class="text-white text-sm font-mono border-b border-dashed border-white/40 focus:border-amber-500 focus:text-amber-300 transition-colors cursor-text" contenteditable="true" spellcheck="false">Acquiring GPS...</span>
+                    </div>
+                    
+                    <div class="text-white/70 text-xs font-mono mt-1" id="cam-overlay-coords">GPS: ---</div>
+                    <div class="text-white/50 text-[10px] font-mono mt-0.5" id="cam-overlay-time">0000-00-00 00:00:00</div>
+                </div>
+
+                <!-- Controls -->
+                <div class="absolute bottom-6 right-6 z-10 flex flex-col gap-4 pointer-events-auto mb-safe">
+                    <button onclick="toggleFlash()" id="btn-flash" class="p-3 bg-black/40 backdrop-blur-md rounded-full text-white/80 border border-white/10 active:scale-95">
+                        <i data-lucide="zap-off" width="24"></i>
+                    </button>
+                    <button onclick="flipCamera()" class="p-3 bg-black/40 backdrop-blur-md rounded-full text-white/80 border border-white/10 active:rotate-180 transition-all duration-500">
+                        <i data-lucide="refresh-cw" width="24"></i>
+                    </button>
+                </div>
+                
+                <div id="flash-overlay" class="absolute inset-0 bg-white opacity-0 pointer-events-none z-50"></div>
+                
+                <!-- Quick Toast -->
+                <div id="cam-toast" class="absolute top-20 left-1/2 -translate-x-1/2 bg-black/80 border border-white/10 text-white px-4 py-2 rounded-lg backdrop-blur-md hidden z-40 items-center gap-2 shadow-lg mt-safe">
+                    <span id="cam-toast-text" class="text-xs font-bold font-mono">SAVED</span>
+                </div>
+            </div>
+            
+            <div class="h-24 bg-black/90 backdrop-blur-md flex items-center justify-center border-t border-white/10 pointer-events-auto pb-safe">
+                <button onclick="capturePhoto()" class="w-18 h-18 rounded-full border-4 border-white flex items-center justify-center active:scale-95 transition-transform hover:bg-white/10">
+                    <div class="w-16 h-16 bg-white rounded-full shadow-lg"></div>
+                </button>
+            </div>
+        </div>
+
+        <!-- ==================== VIEW: GALLERY ==================== -->
+        <div id="view-gallery" class="hidden absolute inset-0 z-50 bg-dark-950 flex flex-col animate-modal-in">
+            <header class="p-6 pb-4 flex items-center gap-4 bg-dark-950 border-b border-dark-800 pt-safe">
+                <button onclick="switchView('dashboard')" class="text-white/70 hover:text-white"><i data-lucide="arrow-left"></i></button>
+                <h2 class="text-xl font-bold text-white tracking-wider">FOLDERS</h2>
+            </header>
+            
+            <div class="p-6 flex-1 overflow-y-auto no-scrollbar pb-safe">
+                <div id="gallery-folder-list" class="grid grid-cols-1 gap-3"></div>
+                <!-- Native Ad Slot -->
+                <div id="ad-native-gallery" class="ad-banner-slot h-20 rounded-xl border border-dark-800 mt-3 hidden">
+                    <span>NATIVE AD (MATCHED CONTENT)</span>
+                </div>
+                
+                <button onclick="openNewFolderModal()" class="mt-6 w-full py-4 border-2 border-dashed border-dark-700 rounded-xl text-dark-500 font-mono text-xs hover:border-amber-500 hover:text-amber-500 transition-colors flex items-center justify-center gap-2">
+                    <i data-lucide="plus" width="16"></i> CREATE NEW PROJECT
+                </button>
+            </div>
+        </div>
+
+        <!-- ==================== VIEW: FOLDER DETAIL ==================== -->
+        <div id="view-folder-detail" class="hidden absolute inset-0 z-50 bg-dark-950 flex flex-col">
+            <header class="p-6 pb-4 flex justify-between items-center bg-dark-950 border-b border-dark-800 pt-safe">
+                <div class="flex items-center gap-4">
+                    <button onclick="switchView('gallery')" class="text-white/70 hover:text-white"><i data-lucide="arrow-left"></i></button>
+                    <div>
+                        <h2 id="detail-folder-name" class="text-lg font-bold text-white tracking-wider">PROJECT</h2>
+                        <p id="detail-photo-count" class="text-[10px] text-gray-500 font-mono">0 PHOTOS</p>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <!-- 隱藏的檔案輸入框 -->
+                    <input type="file" id="file-import-input" accept="image/*" multiple class="hidden" onchange="handleFileImport(this)">
+                    
+                    <button onclick="triggerImport()" id="btn-import" class="text-[10px] bg-dark-800 border border-dark-600 text-white px-3 py-1.5 rounded flex items-center gap-1 hover:bg-white hover:text-black transition-colors">
+                        <i data-lucide="upload" width="12"></i> IMPORT
+                    </button>
+                    <button onclick="setAsActiveProject()" id="btn-set-active" class="text-[10px] border border-amber-500 text-amber-500 px-3 py-1.5 rounded hover:bg-amber-500 hover:text-black transition-colors min-w-[70px]">
+                        SET ACTIVE
+                    </button>
+                    <button onclick="exportCurrentFolder()" id="btn-export-zip" class="text-[10px] bg-dark-800 border border-dark-600 text-white px-3 py-1.5 rounded flex items-center gap-1 hover:bg-white hover:text-black transition-colors">
+                        <i data-lucide="archive" width="12"></i>
+                    </button>
+                </div>
+            </header>
+            
+            <div class="p-4 flex-1 overflow-y-auto no-scrollbar pb-safe">
+                <div id="photo-grid" class="grid grid-cols-2 md:grid-cols-3 gap-3"></div>
+                <div id="empty-state" class="hidden h-full flex flex-col items-center justify-center text-gray-600 mt-20">
+                    <i data-lucide="image-off" width="48" height="48" class="mb-2 opacity-50"></i>
+                    <span class="text-xs font-mono">NO PHOTOS</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== VIEW: SETTINGS ==================== -->
+        <div id="view-settings" class="hidden absolute inset-0 z-50 bg-dark-950 flex flex-col animate-modal-in">
+            <header class="p-6 pb-4 flex items-center gap-4 bg-dark-950 border-b border-dark-800 pt-safe">
+                <button onclick="switchView('dashboard')" class="text-white/70 hover:text-white"><i data-lucide="arrow-left"></i></button>
+                <h2 class="text-xl font-bold text-white tracking-wider">SETTINGS</h2>
+            </header>
+            <div class="p-6 space-y-4 pb-safe flex-1 overflow-y-auto no-scrollbar">
+                
+                <!-- Remove Ads Option -->
+                <div id="settings-remove-ads" class="bg-gradient-to-r from-amber-500/20 to-amber-600/10 border border-amber-500/50 p-4 rounded-xl flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-amber-500 rounded-lg text-black"><i data-lucide="crown"></i></div>
+                        <div>
+                            <div class="text-white font-bold text-sm">Remove Ads</div>
+                            <div class="text-white/50 text-[10px] font-mono">GO PRO LIFETIME</div>
+                        </div>
+                    </div>
+                    <button onclick="purchaseNoAds()" class="text-xs bg-amber-500 text-black font-bold px-3 py-2 rounded">BUY</button>
+                </div>
+
+                <div class="text-xs text-dark-700 font-mono mb-2 mt-2">AI FEATURES</div>
+                <div class="bg-dark-900 border border-purple-500/30 p-4 rounded-xl flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-purple-500/10 rounded-lg"><i data-lucide="sparkles" class="text-purple-500"></i></div>
+                        <div>
+                            <div class="text-white font-bold text-sm">AI Auto-Sort</div>
+                            <div class="text-white/50 text-[10px] font-mono">DETECT & MOVE</div>
+                        </div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="ai-toggle" class="sr-only peer" onchange="toggleAI(this)">
+                        <div class="w-9 h-5 bg-dark-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-600"></div>
+                    </label>
+                </div>
+
+                <div class="text-xs text-dark-700 font-mono mb-2 mt-4">PERMISSIONS</div>
+                <div class="bg-dark-900 border border-dark-800 p-4 rounded-xl flex items-center justify-between">
+                    <div class="flex items-center gap-3"><i data-lucide="camera" class="text-amber-500"></i><span class="text-sm font-bold">Camera</span></div>
+                    <button onclick="requestCameraPermission()" class="text-xs bg-dark-800 px-3 py-2 rounded border border-dark-700 text-white">CHECK</button>
+                </div>
+                <div class="bg-dark-900 border border-dark-800 p-4 rounded-xl flex items-center justify-between">
+                    <div class="flex items-center gap-3"><i data-lucide="map-pin" class="text-amber-500"></i><span class="text-sm font-bold">Location</span></div>
+                    <button onclick="requestGeoPermission()" class="text-xs bg-dark-800 px-3 py-2 rounded border border-dark-700 text-white">CHECK</button>
+                </div>
+                
+                <div class="pt-8 border-t border-dark-800 text-center">
+                    <button onclick="clearAllData()" class="text-red-500 text-xs font-mono underline hover:text-red-400">RESET APP DATA</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== MODALS ==================== -->
+        <div id="modal-project-selector" class="hidden absolute inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6">
+            <div class="bg-dark-900 border border-dark-800 w-full max-w-sm rounded-2xl overflow-hidden flex flex-col max-h-[70vh]">
+                <div class="p-4 border-b border-dark-800 flex justify-between items-center">
+                    <span class="text-sm font-bold text-white">SELECT FOLDER</span>
+                    <button onclick="closeProjectSelector()"><i data-lucide="x" width="20" class="text-white"></i></button>
+                </div>
+                <div id="camera-folder-list" class="p-2 overflow-y-auto gap-2 flex flex-col"></div>
+            </div>
+        </div>
+
+        <div id="modal-new-folder" class="hidden absolute inset-0 z-[60] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6">
+            <div class="bg-dark-900 border border-dark-800 w-full max-w-sm rounded-2xl p-6">
+                <h3 class="text-lg font-bold text-white mb-4">NEW PROJECT</h3>
+                <input type="text" id="new-folder-name" class="w-full bg-dark-950 border border-dark-700 rounded-lg p-3 text-white focus:border-amber-500 outline-none mb-4 uppercase" placeholder="ENTER NAME">
+                <div class="flex gap-3">
+                    <button onclick="closeNewFolderModal()" class="flex-1 py-3 bg-dark-800 rounded-lg text-xs font-bold text-gray-400">CANCEL</button>
+                    <button onclick="confirmNewFolder()" class="flex-1 py-3 bg-amber-500 text-black rounded-lg text-xs font-bold">CREATE</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- AD: Interstitial Modal -->
+        <div id="modal-ad-interstitial" class="hidden absolute inset-0 z-[99] bg-dark-950 flex flex-col items-center justify-center p-6">
+            <div class="absolute top-6 right-6">
+                <button id="btn-close-ad" class="text-white/50 text-xs border border-white/20 px-3 py-1 rounded-full pointer-events-none transition-all">WAIT 10s...</button>
+            </div>
+            <div class="w-full aspect-[4/5] bg-dark-900 border border-dark-800 rounded-xl flex items-center justify-center mb-8 relative overflow-hidden">
+                <div class="absolute inset-0 bg-grid-pattern opacity-20"></div>
+                <span class="text-dark-600 font-mono text-xl">ADVERTISEMENT</span>
+            </div>
+            <button class="bg-white text-black font-bold px-8 py-3 rounded-full w-full max-w-xs hover:bg-gray-200 transition-colors">VISIT SPONSOR</button>
+            <p class="text-dark-700 text-[10px] mt-4">WATCH TO DOWNLOAD</p>
+        </div>
+
+        <div id="view-photo-preview" class="hidden absolute inset-0 z-[60] bg-black flex flex-col justify-center items-center">
+            <button onclick="closePhotoPreview()" class="absolute top-6 right-6 p-2 bg-black/50 rounded-full text-white z-20"><i data-lucide="x"></i></button>
+            <img id="preview-img" src="" class="max-w-full max-h-full object-contain">
+            <div class="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black to-transparent text-white">
+                <p id="preview-meta" class="font-mono text-xs text-gray-300"></p>
+                <div class="flex gap-4 mt-4">
+                    <button onclick="deleteCurrentPhoto()" class="flex-1 py-3 bg-red-900/50 text-red-200 rounded-lg text-xs font-bold border border-red-900">DELETE</button>
+                    <a id="download-link" href="#" download class="flex-1 py-3 bg-white text-black rounded-lg text-xs font-bold flex items-center justify-center gap-2"><i data-lucide="download" width="16"></i> SAVE</a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <canvas id="process-canvas" class="hidden"></canvas>
+
+    <!-- JavaScript -->
+    <script>
+        lucide.createIcons();
+
+        // --- Database ---
+        const DB_NAME = 'EngCamDB_V4';
+        const DB_VERSION = 1;
+        let db;
+
+        function initDB() {
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
+            request.onupgradeneeded = (e) => {
+                db = e.target.result;
+                if (!db.objectStoreNames.contains('folders')) {
+                    const store = db.createObjectStore('folders', { keyPath: 'id' });
+                    store.add({ id: 'default', name: 'DEFAULT PROJECT', createdAt: Date.now() });
+                    store.add({ id: 'ai-buffer', name: 'AI PROCESSING', createdAt: 0 }); // System folder
+                }
+                if (!db.objectStoreNames.contains('images')) {
+                    db.createObjectStore('images', { keyPath: 'id' }).createIndex('folderId', 'folderId', { unique: false });
+                }
+            };
+            request.onsuccess = (e) => {
+                db = e.target.result;
+                updateOverlayInfo();
+                updateTotalPhotoCount();
+                loadAISettings();
+                loadAdSettings();
+                processBufferQueue(); 
+            };
+            request.onerror = (e) => console.error("DB Error", e);
+        }
+
+        // --- State ---
+        let activeFolderId = localStorage.getItem('activeFolderId') || 'default';
+        let activeFolderName = 'DEFAULT PROJECT';
+        let currentViewingFolderId = null;
+        let currentViewingPhotoId = null;
+        let videoStream = null;
+        let facingMode = 'environment';
+        let isAIEnabled = false;
+        let isProcessingQueue = false;
+        let flashOn = false;
+        let areAdsRemoved = false;
+
+        // --- Ads Logic ---
+        function loadAdSettings() {
+            areAdsRemoved = localStorage.getItem('eng_no_ads') === 'true';
+            updateAdUI();
+        }
+
+        function updateAdUI() {
+            if(areAdsRemoved) {
+                document.getElementById('ad-banner-dashboard').classList.add('hidden');
+                document.getElementById('ad-native-gallery').classList.add('hidden');
+                document.getElementById('settings-remove-ads').classList.add('hidden');
+            } else {
+                document.getElementById('ad-banner-dashboard').classList.remove('hidden');
+                document.getElementById('ad-native-gallery').classList.remove('hidden');
+            }
+        }
+
+        function purchaseNoAds() {
+            if(confirm("Simulate Purchase: Remove Ads for $2.99?")) {
+                areAdsRemoved = true;
+                localStorage.setItem('eng_no_ads', 'true');
+                updateAdUI();
+                alert("Ads Removed. Thank you for your support!");
+            }
+        }
+
+        function showExportAd(callback) {
+            if(areAdsRemoved) { callback(); return; }
+            
+            const modal = document.getElementById('modal-ad-interstitial');
+            const btn = document.getElementById('btn-close-ad');
+            modal.classList.remove('hidden');
+            let count = 10;
+            btn.innerText = `WAIT ${count}s...`;
+            btn.style.pointerEvents = 'none';
+            btn.classList.add('text-white/50', 'border-white/20');
+            btn.classList.remove('text-white', 'border-white');
+
+            const timer = setInterval(() => {
+                count--;
+                if(count <= 0) {
+                    clearInterval(timer);
+                    btn.innerText = "CLOSE & DOWNLOAD";
+                    btn.style.pointerEvents = 'auto';
+                    btn.classList.remove('text-white/50', 'border-white/20');
+                    btn.classList.add('text-white', 'border-white');
+                    btn.onclick = () => {
+                        modal.classList.add('hidden');
+                        callback();
+                    };
+                } else {
+                    btn.innerText = `WAIT ${count}s...`;
+                }
+            }, 1000);
+        }
+
+        // --- Navigation ---
+        function switchView(viewId) {
+            ['dashboard', 'camera', 'gallery', 'folder-detail', 'settings', 'photo-preview'].forEach(v => {
+                const el = document.getElementById(`view-${v}`);
+                if(el) el.classList.add('hidden');
+            });
+            document.getElementById(`view-${viewId}`).classList.remove('hidden');
+            
+            if (viewId === 'camera') {
+                startCamera();
+                startClock();
+                updateOverlayInfo();
+                initGeolocation();
+                document.getElementById('ai-status-badge').classList.toggle('hidden', !isAIEnabled);
+            } else {
+                stopCamera();
+            }
+            if (viewId === 'gallery') loadGalleryList();
+        }
+
+        // --- Camera & Hardware ---
+        async function startCamera() {
+            const video = document.getElementById('camera-feed');
+            try {
+                if (videoStream) videoStream.getTracks().forEach(t => t.stop());
+                videoStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: facingMode, width: { ideal: 1920 }, height: { ideal: 1080 } },
+                    audio: false
+                });
+                video.srcObject = videoStream;
+            } catch (e) { console.log("Cam error", e); alert("Camera Init Failed"); }
+        }
+
+        function stopCamera() {
+            if (videoStream) {
+                videoStream.getTracks().forEach(t => t.stop());
+                videoStream = null;
+                flashOn = false;
+                updateFlashUI();
+            }
+        }
+
+        function flipCamera() {
+            if(videoStream) videoStream.getTracks().forEach(t => t.stop());
+            facingMode = (facingMode === 'environment') ? 'user' : 'environment';
+            startCamera();
+        }
+
+        function toggleFlash() {
+            if (!videoStream) return;
+            const track = videoStream.getVideoTracks()[0];
+            const capabilities = track.getCapabilities();
+            if (!capabilities.torch) { alert("Flash not supported"); return; }
+
+            flashOn = !flashOn;
+            track.applyConstraints({ advanced: [{ torch: flashOn }] })
+                .then(updateFlashUI)
+                .catch(e => { console.error("Flash Error", e); flashOn = !flashOn; updateFlashUI(); });
+        }
+
+        function updateFlashUI() {
+            const btn = document.getElementById('btn-flash');
+            if(flashOn) {
+                btn.classList.add('text-amber-500', 'border-amber-500');
+                btn.classList.remove('text-white/80', 'border-white/10');
+                btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-zap"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>';
+            } else {
+                btn.classList.remove('text-amber-500', 'border-amber-500');
+                btn.classList.add('text-white/80', 'border-white/10');
+                btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-zap-off"><polyline points="12.41 6.75 13 2 10.57 4.92"/><polyline points="18.57 12.91 21 10 15.66 10"/><polyline points="8 8 3 14 12 14 11 22 16 15"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+            }
+        }
+
+        function initGeolocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        const lat = pos.coords.latitude.toFixed(5);
+                        const lng = pos.coords.longitude.toFixed(5);
+                        document.getElementById('cam-overlay-coords').innerText = `GPS: ${lat}, ${lng}`;
+                        const locEl = document.getElementById('cam-overlay-location');
+                        if(locEl.innerText.includes("Locating") || locEl.innerText.includes("GPS")) locEl.innerText = "Location Acquired";
+                    }, 
+                    (err) => { document.getElementById('cam-overlay-coords').innerText = "GPS: Unavailable"; },
+                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                );
+            }
+        }
+
+        // --- Capture & Import Logic ---
+        function triggerImport() {
+            document.getElementById('file-import-input').click();
+        }
+
+        function handleFileImport(input) {
+            const files = input.files;
+            if(!files.length) return;
+
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        // Resize if too big (simple optimization)
+                        const maxDim = 1920;
+                        let w = img.width;
+                        let h = img.height;
+                        if(w > maxDim || h > maxDim) {
+                            const ratio = w/h;
+                            if(w > h) { w = maxDim; h = maxDim/ratio; }
+                            else { h = maxDim; w = maxDim*ratio; }
+                        }
+                        
+                        canvas.width = w;
+                        canvas.height = h;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, w, h);
+                        
+                        // Add Watermark to Imported Image
+                        drawWatermark(ctx, w, h, "(IMPORTED)");
+                        
+                        const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                        saveToDB(dataUrl);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+            input.value = ''; // Reset
+        }
+
+        async function capturePhoto() {
+            const flash = document.getElementById('flash-overlay');
+            flash.classList.remove('animate-flash');
+            void flash.offsetWidth;
+            flash.classList.add('animate-flash');
+
+            const video = document.getElementById('camera-feed');
+            const canvas = document.getElementById('process-canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            
+            // Handle Orientation
+            if(window.innerWidth > window.innerHeight && video.videoHeight > video.videoWidth) {
+                // Device landscape but video portrait (common mobile case) - Rotate canvas 90 deg?
+                // Actually simpler: just draw as is, but adjust watermark position to the "visual bottom"
+                // Or better: Let's assume standard behavior for now. 
+            }
+
+            if (facingMode === 'user') {
+                ctx.translate(canvas.width, 0);
+                ctx.scale(-1, 1);
+            }
+            ctx.drawImage(video, 0, 0);
+            if (facingMode === 'user') ctx.setTransform(1,0,0,1,0,0);
+
+            // Watermark Logic for Orientation
+            drawWatermark(ctx, canvas.width, canvas.height, "");
+
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            saveToDB(dataUrl, true);
+        }
+
+        async function saveToDB(dataUrl, autoDownload = false) {
+            const saveFolderId = isAIEnabled ? 'ai-buffer' : activeFolderId;
+            const imageDoc = {
+                id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+                folderId: saveFolderId,
+                data: dataUrl,
+                timestamp: new Date().toISOString(),
+                location: document.getElementById('cam-overlay-location').innerText,
+                coords: document.getElementById('cam-overlay-coords').innerText,
+                aiTag: null
+            };
+
+            const tx = db.transaction(['images'], 'readwrite');
+            await tx.objectStore('images').add(imageDoc);
+
+            if(isAIEnabled && saveFolderId === 'ai-buffer') processBufferQueue();
+
+            if(autoDownload) {
+                showToast(isAIEnabled ? "PROCESSING..." : "SAVED");
+                const link = document.createElement('a');
+                link.href = dataUrl;
+                link.download = `ENG_${imageDoc.id}.jpg`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } else {
+                showToast("IMPORTED");
+                // Refresh grid if we are in that folder
+                if(currentViewingFolderId === activeFolderId) {
+                    loadPhotosInFolder(activeFolderId);
+                }
+            }
+        }
+
+        // --- Async Queue Processor ---
+        async function processBufferQueue() {
+            if(isProcessingQueue) return;
+            isProcessingQueue = true;
+            document.getElementById('processing-indicator').classList.remove('hidden');
+
+            try {
+                const tx = db.transaction(['images'], 'readonly');
+                const index = tx.objectStore('images').index('folderId');
+                const req = index.getAll('ai-buffer');
+                
+                req.onsuccess = async () => {
+                    const images = req.result;
+                    if(images.length === 0) {
+                        isProcessingQueue = false;
+                        document.getElementById('processing-indicator').classList.add('hidden');
+                        return;
+                    }
+
+                    for(const img of images) {
+                        await new Promise(r => setTimeout(r, 1500));
+                        const aiResult = await mockAnalyze(); 
+                        const tag = aiResult.tag;
+                        const targetName = aiResult.folderName;
+                        const targetId = await ensureFolderExists(targetName);
+                        
+                        const txUpdate = db.transaction(['images'], 'readwrite');
+                        const imgStore = txUpdate.objectStore('images');
+                        img.folderId = targetId;
+                        img.aiTag = tag;
+                        imgStore.put(img);
+                    }
+                    isProcessingQueue = false;
+                    processBufferQueue();
+                };
+            } catch (e) {
+                console.error("Queue Error", e);
+                isProcessingQueue = false;
+            }
+        }
+
+        async function mockAnalyze() {
+            const cats = [
+                {tag: 'METAL', folderName: 'STRUCTURE'},
+                {tag: 'WIRE', folderName: 'ELECTRICAL'},
+                {tag: 'PIPE', folderName: 'PLUMBING'}
+            ];
+            return cats[Math.floor(Math.random()*cats.length)];
+        }
+
+        async function ensureFolderExists(name) {
+            return new Promise((resolve) => {
+                const tx = db.transaction(['folders'], 'readwrite');
+                const store = tx.objectStore('folders');
+                let foundId = null;
+                store.openCursor().onsuccess = (e) => {
+                    const cursor = e.target.result;
+                    if(cursor) {
+                        if(cursor.value.name === name) foundId = cursor.value.id;
+                        cursor.continue();
+                    } else {
+                        if(foundId) resolve(foundId);
+                        else {
+                            const newId = Date.now().toString();
+                            store.add({id: newId, name: name, createdAt: Date.now()});
+                            resolve(newId);
+                        }
+                    }
+                };
+            });
+        }
+
+        function drawWatermark(ctx, w, h, tag) {
+            // Orientation Logic: If width > height (Landscape), we ensure text is at bottom.
+            // Standard canvas coordinate system puts (0,0) top left. 
+            // So h is always bottom.
+            // However, if the user rotates phone, w and h might flip. 
+            // The logic below works relative to image dimensions regardless of orientation.
+            
+            const baseSize = h * 0.03;
+            const pad = w * 0.04;
+            ctx.shadowColor = "rgba(0,0,0,0.8)";
+            ctx.shadowBlur = 4;
+            ctx.shadowOffsetX = 2; ctx.shadowOffsetY = 2;
+            ctx.font = `bold ${baseSize*1.2}px monospace`;
+            ctx.fillStyle = '#f59e0b';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'bottom';
+            
+            const projName = document.getElementById('cam-project-name').innerText;
+            ctx.fillText(projName, pad, h - pad - (baseSize*3.5));
+            
+            ctx.fillStyle = 'white';
+            ctx.font = `${baseSize}px monospace`;
+            const loc = document.getElementById('cam-overlay-location').innerText;
+            ctx.fillText(loc, pad, h - pad - (baseSize*2));
+            
+            const gps = document.getElementById('cam-overlay-coords').innerText;
+            const time = document.getElementById('cam-overlay-time').innerText;
+            ctx.fillStyle = 'rgba(255,255,255,0.8)';
+            ctx.font = `${baseSize*0.8}px monospace`;
+            ctx.fillText(`${gps} | ${time}`, pad, h - pad - (baseSize*0.8));
+        }
+
+        async function exportCurrentFolder() {
+            if(!currentViewingFolderId) return;
+            showExportAd(() => { runExportProcess(); });
+        }
+
+        async function runExportProcess() {
+            const btn = document.getElementById('btn-export-zip');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<span class="processing-dot"></span> ZIPPING`;
+            btn.disabled = true;
+
+            const zip = new JSZip();
+            const folderName = document.getElementById('detail-folder-name').innerText;
+            const folder = zip.folder(folderName);
+
+            const tx = db.transaction(['images'], 'readonly');
+            const idx = tx.objectStore('images').index('folderId');
+            
+            idx.getAll(currentViewingFolderId).onsuccess = async (e) => {
+                const images = e.target.result;
+                if(images.length === 0) {
+                    alert("Folder is empty");
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    return;
+                }
+                images.forEach((img, i) => {
+                    const base64Data = img.data.split(',')[1];
+                    folder.file(`IMG_${i+1}.jpg`, base64Data, {base64: true});
+                });
+                const content = await zip.generateAsync({type:"blob"});
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(content);
+                link.download = `${folderName}_EXPORT.zip`;
+                link.click();
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                showToast("ZIP DOWNLOADED");
+            };
+        }
+
+        function showToast(msg, isError=false) {
+            const t = document.getElementById('cam-toast');
+            const txt = document.getElementById('cam-toast-text');
+            txt.innerText = msg;
+            t.className = `absolute top-20 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg backdrop-blur-md flex items-center shadow-lg z-50 ${isError ? 'bg-red-900/80 text-white' : 'bg-black/80 text-white border border-white/10'}`;
+            t.classList.remove('hidden');
+            setTimeout(() => t.classList.add('hidden'), 2000);
+        }
+
+        function loadGalleryList() {
+            const list = document.getElementById('gallery-folder-list');
+            list.innerHTML = '';
+            const tx = db.transaction(['folders'], 'readonly');
+            tx.objectStore('folders').openCursor().onsuccess = (e) => {
+                const cursor = e.target.result;
+                if (cursor) {
+                    const f = cursor.value;
+                    if(f.id === 'ai-buffer') { cursor.continue(); return; }
+                    
+                    const div = document.createElement('div');
+                    div.className = `p-4 rounded-xl border bg-dark-900 border-dark-800 flex justify-between items-center`;
+                    div.innerHTML = `
+                        <div class="flex-1 flex items-center gap-3 cursor-pointer folder-click-area">
+                            <i data-lucide="folder" class="text-gray-500" width="20"></i>
+                            <div class="flex flex-col">
+                                <span class="text-sm font-bold text-white">${f.name}</span>
+                            </div>
+                        </div>
+                        <button class="p-2 text-dark-700 hover:text-red-500 delete-btn"><i data-lucide="trash-2" width="18"></i></button>
+                    `;
+                    div.querySelector('.folder-click-area').onclick = () => openFolderDetail(f.id, f.name);
+                    div.querySelector('.delete-btn').onclick = (evt) => { evt.stopPropagation(); deleteFolder(f.id, f.name); };
+                    list.appendChild(div);
+                    cursor.continue();
+                }
+                lucide.createIcons();
+            };
+        }
+
+        function openNewFolderModal() {
+            document.getElementById('modal-new-folder').classList.remove('hidden');
+            document.getElementById('modal-new-folder').classList.add('flex');
+        }
+        function closeNewFolderModal() {
+            document.getElementById('modal-new-folder').classList.add('hidden');
+            document.getElementById('modal-new-folder').classList.remove('flex');
+        }
+        function confirmNewFolder() {
+            const nameInput = document.getElementById('new-folder-name');
+            const name = nameInput.value.trim().toUpperCase();
+            if(!name) return;
+
+            const tx = db.transaction(['folders'], 'readwrite');
+            const store = tx.objectStore('folders');
+            
+            store.getAll().onsuccess = (e) => {
+                const folders = e.target.result;
+                const exists = folders.some(f => f.name === name);
+                if(exists) { alert("資料夾名稱重複 (Duplicate Name)"); return; }
+                const id = Date.now().toString();
+                store.add({id, name: name, createdAt: Date.now()});
+                closeNewFolderModal();
+                loadGalleryList();
+            };
+        }
+
+        function deleteFolder(id, name) {
+            if(id === 'default') return alert("Cannot delete default.");
+            if(confirm("Delete project?")) {
+                const tx = db.transaction(['folders', 'images'], 'readwrite');
+                tx.objectStore('folders').delete(id);
+                const idx = tx.objectStore('images').index('folderId');
+                idx.openCursor(IDBKeyRange.only(id)).onsuccess = (e) => {
+                    const c = e.target.result;
+                    if(c) { c.delete(); c.continue(); }
+                };
+                tx.oncomplete = () => {
+                    if(activeFolderId === id) {
+                        activeFolderId = 'default';
+                        localStorage.setItem('activeFolderId', 'default');
+                        updateOverlayInfo();
+                    }
+                    loadGalleryList();
+                };
+            }
+        }
+        function openPhotoPreview(img) {
+            currentViewingPhotoId = img.id;
+            const v = document.getElementById('view-photo-preview');
+            document.getElementById('preview-img').src = img.data;
+            document.getElementById('preview-meta').innerText = img.timestamp;
+            document.getElementById('download-link').href = img.data;
+            v.classList.remove('hidden');
+        }
+        function closePhotoPreview() { document.getElementById('view-photo-preview').classList.add('hidden'); }
+        function deleteCurrentPhoto() {
+            if(confirm("Delete?")) {
+                const tx = db.transaction(['images'], 'readwrite');
+                tx.objectStore('images').delete(currentViewingPhotoId);
+                tx.oncomplete = () => { closePhotoPreview(); loadPhotosInFolder(currentViewingFolderId); };
+            }
+        }
+        
+        function updateOverlayInfo() {
+            const tx = db.transaction(['folders'], 'readonly');
+            tx.objectStore('folders').get(activeFolderId).onsuccess = (e) => {
+                if(e.target.result) {
+                    activeFolderName = e.target.result.name;
+                    document.getElementById('cam-project-name').innerText = activeFolderName;
+                    document.getElementById('dashboard-project-label').innerText = `CURRENT: ${activeFolderName}`;
+                }
+            };
+        }
+        
+        function startClock() {
+            setInterval(() => {
+                const now = new Date();
+                const date = now.getFullYear() + '-' + (now.getMonth()+1).toString().padStart(2, '0') + '-' + now.getDate().toString().padStart(2, '0');
+                const time = now.toTimeString().split(' ')[0];
+                const el = document.getElementById('cam-overlay-time');
+                if(el) el.innerText = date + ' ' + time;
+            }, 1000);
+        }
+
+        function openFolderDetail(id, name) {
+            currentViewingFolderId = id;
+            document.getElementById('detail-folder-name').innerText = name;
+            document.getElementById('view-gallery').classList.add('hidden');
+            document.getElementById('view-folder-detail').classList.remove('hidden');
+            
+            const btn = document.getElementById('btn-set-active');
+            if(activeFolderId === id) {
+                btn.innerText = "ACTIVE";
+                btn.className = "text-[10px] bg-amber-500 text-black px-3 py-1.5 rounded font-bold min-w-[70px]";
+                btn.disabled = true;
+            } else {
+                btn.innerText = "SET ACTIVE";
+                btn.className = "text-[10px] border border-amber-500 text-amber-500 px-3 py-1.5 rounded hover:bg-amber-500 hover:text-black transition-colors min-w-[70px]";
+                btn.disabled = false;
+            }
+            loadPhotosInFolder(id);
+        }
+
+        function setAsActiveProject() {
+            activeFolderId = currentViewingFolderId;
+            localStorage.setItem('activeFolderId', activeFolderId);
+            updateOverlayInfo();
+            openFolderDetail(currentViewingFolderId, document.getElementById('detail-folder-name').innerText);
+            alert("Project Activated");
+        }
+
+        function loadPhotosInFolder(id) {
+            const grid = document.getElementById('photo-grid');
+            const empty = document.getElementById('empty-state');
+            grid.innerHTML = '';
+            
+            const tx = db.transaction(['images'], 'readonly');
+            const idx = tx.objectStore('images').index('folderId');
+            let count = 0;
+            
+            idx.openCursor(IDBKeyRange.only(id)).onsuccess = (e) => {
+                const c = e.target.result;
+                if(c) {
+                    count++;
+                    const img = c.value;
+                    const div = document.createElement('div');
+                    div.className = "aspect-square bg-dark-800 rounded-lg overflow-hidden relative cursor-pointer border border-dark-700";
+                    div.innerHTML = `<img src="${img.data}" class="w-full h-full object-cover">`;
+                    div.onclick = () => openPhotoPreview(img);
+                    grid.appendChild(div);
+                    c.continue();
+                } else {
+                    document.getElementById('detail-photo-count').innerText = `${count} PHOTOS`;
+                    empty.classList.toggle('hidden', count > 0);
+                }
+            };
+        }
+
+        function updateTotalPhotoCount() {
+            const tx = db.transaction(['images'], 'readonly');
+            tx.objectStore('images').count().onsuccess = (e) => {
+                document.getElementById('total-photos-count').innerText = `${e.target.result} ITEMS`;
+            };
+        }
+        function loadAISettings() {
+            isAIEnabled = localStorage.getItem('eng_ai_enabled') === 'true';
+            document.getElementById('ai-toggle').checked = isAIEnabled;
+        }
+        function toggleAI(el) {
+            isAIEnabled = el.checked;
+            localStorage.setItem('eng_ai_enabled', isAIEnabled);
+        }
+        function openProjectSelector() {
+            const m = document.getElementById('modal-project-selector');
+            const l = document.getElementById('camera-folder-list');
+            l.innerHTML = '';
+            const tx = db.transaction(['folders'], 'readonly');
+            tx.objectStore('folders').openCursor().onsuccess = (e) => {
+                const c = e.target.result;
+                if(c) {
+                    const f = c.value;
+                    if(f.id !== 'ai-buffer') {
+                        const div = document.createElement('div');
+                        div.className = "p-3 border-b border-dark-800 text-white cursor-pointer hover:bg-dark-800";
+                        div.innerText = f.name;
+                        div.onclick = () => {
+                            activeFolderId = f.id;
+                            localStorage.setItem('activeFolderId', f.id);
+                            updateOverlayInfo();
+                            closeProjectSelector();
+                        };
+                        l.appendChild(div);
+                    }
+                    c.continue();
+                }
+            };
+            m.classList.remove('hidden');
+        }
+        function closeProjectSelector() { document.getElementById('modal-project-selector').classList.add('hidden'); }
+        function requestCameraPermission() { navigator.mediaDevices.getUserMedia({video:true}).then(s=>{s.getTracks().forEach(t=>t.stop());alert("OK")}).catch(()=>alert("Fail")); }
+        function requestGeoPermission() { navigator.geolocation.getCurrentPosition(()=>alert("OK"), ()=>alert("Fail")); }
+        function clearAllData() { if(confirm("RESET?")) { indexedDB.deleteDatabase(DB_NAME); localStorage.clear(); location.reload(); } }
+
+        // Start
+        initDB();
+
+    </script>
+</body>
+</html>
