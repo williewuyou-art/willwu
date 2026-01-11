@@ -600,9 +600,14 @@
             const video = document.getElementById('camera-feed');
             try {
                 if (videoStream) videoStream.getTracks().forEach(t => t.stop());
-                // FIX: Relaxed constraints to ensure camera opens on more devices
+                
+                // 提高解析度設定：嘗試請求 4K 解析度，若不支援則由瀏覽器降級
                 videoStream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: facingMode }, // Removed ideal width/height
+                    video: { 
+                        facingMode: facingMode,
+                        width: { ideal: 3840 }, 
+                        height: { ideal: 2160 } 
+                    }, 
                     audio: false
                 });
                 video.srcObject = videoStream;
@@ -611,9 +616,20 @@
                 };
                 hasCameraPerm = true;
             } catch (e) { 
-                console.log("Cam error", e); 
-                alert("Camera Init Failed. Check Permissions. (" + e.name + ")");
-                hasCameraPerm = false;
+                console.log("High Res Cam error, retrying with defaults", e); 
+                // Fallback mechanism
+                try {
+                    videoStream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: facingMode }, 
+                        audio: false
+                    });
+                    video.srcObject = videoStream;
+                    video.play();
+                    hasCameraPerm = true;
+                } catch(err) {
+                    alert("Camera Init Failed. Check Permissions. (" + err.name + ")");
+                    hasCameraPerm = false;
+                }
             }
         }
 
@@ -666,7 +682,8 @@
                     const img = new Image();
                     img.onload = function() {
                         const canvas = document.createElement('canvas');
-                        const maxDim = 1920;
+                        // 提高匯入圖片的最大邊長限制到 4K
+                        const maxDim = 3840;
                         let w = img.width;
                         let h = img.height;
                         if(w > maxDim || h > maxDim) {
