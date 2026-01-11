@@ -10,6 +10,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Eng. Cam">
 
+    <!-- 內嵌 Manifest (PWA 設定) -->
+    <link rel="manifest" href='data:application/json;base64,ewogICJuYW1lIjogIkVuZ2luZWVyaW5nIENhbWVyYSBQcm8iLAogICJzaG9ydF9uYW1lIjogIkVuZy4gQ2FtIiwKICAic3RhcnRfdXJsIjogIi4iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiMwMDAwMDAiLAogICJ0aGVtZV9jb2xvciI6ICIjMDAwMDAwIiwKICAiaWNvbnMiOiBswogICAgewogICAgICAic3JjIjogImRhdGE6aW1hZ2Uvc3ZnK3htbCxiYXNlNjQsUEhOMmJ5QjNhV1IwSUhSd09pZ3VkMjVnYVdRNkxpOTNMbTl5Wnk4eU1EQXdMM0J5WlhOamIzWnBibWN2YzJjOU16RTJPVEl4TWo1elpYTjBaV0ZzT2lKemRHOTdJbTFsYm1OaGJHVTZJaUo1TVRJeU1qVTFOU0lzSW5abWJ5STZJall3TUdZd01EQWlJSGh0Ym14aGJHbDZhV1JmYVdOdmJuTXhNbUkzTWpZMU5USWlJSGQxY214c1gySnZhV1JsWDJsemRHOXlaV1I2SWpVeE1pSXpNVEl5TWpVMU5TSXNJbTF5Y21OdmJtUnpJanA3Q2c0S01TNDFjM1J2Y0hNaUlINHhNamd6T0RVd01UbGlJRzFoYm14aGMzUmhaR1ZtYVd4bElqc3pOVEUyT1RFd09TSWdlMmxrZGlJNklqVXdNREF3TURBaUlIdHdaWGM5SWpNd01EQXdNQ0lzSW5OM2J5STZJaUo1TVRJeU1qVTFOU0lzSW5SbGVIUWlPaUkyTURBeU1EQXdNREFpZlE9PSIsCiAgICAgICJzaXplcyI6ICI1MTJ4NTEyIiwKICAgICAgInR5cGUiOiAiaW1hZ2Uvc3ZnK3htbCIKICAgIH0KICBdCn0='>
+
     <!-- 內嵌 SVG Icon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%2327272a;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%2309090b;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='0' y='0' width='512' height='512' rx='120' fill='url(%23grad)' /%3E%3Cpath d='M0 256 H512 M256 0 V512' stroke='%233f3f46' stroke-width='2' opacity='0.3' /%3E%3Cpath d='M256 80 L420 170 V342 L256 432 L92 342 V170 Z' fill='none' stroke='%23f59e0b' stroke-width='24' stroke-linejoin='round' /%3E%3Cg transform='translate(256 256)'%3E%3Ccircle r='70' fill='%23f59e0b' /%3E%3Ccircle r='40' fill='%2318181b' /%3E%3Cpath d='M0 -90 L20 -40' stroke='%2309090b' stroke-width='8' /%3E%3Cpath d='M78 -45 L35 -20' stroke='%2309090b' stroke-width='8' /%3E%3Cpath d='M78 45 L35 20' stroke='%2309090b' stroke-width='8' /%3E%3Cpath d='M0 90 L-20 40' stroke='%2309090b' stroke-width='8' /%3E%3Cpath d='M-78 45 L-35 20' stroke='%2309090b' stroke-width='8' /%3E%3Cpath d='M-78 -45 L-35 -20' stroke='%2309090b' stroke-width='8' /%3E%3C/g%3E%3Ctext x='256' y='470' font-family='monospace' font-size='32' fill='%2371717a' text-anchor='middle' letter-spacing='4'%3EENG.CAM%3C/text%3E%3C/svg%3E">
     <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%2327272a;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%2309090b;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='0' y='0' width='512' height='512' rx='120' fill='url(%23grad)' /%3E%3Cpath d='M0 256 H512 M256 0 V512' stroke='%233f3f46' stroke-width='2' opacity='0.3' /%3E%3Cpath d='M256 80 L420 170 V342 L256 432 L92 342 V170 Z' fill='none' stroke='%23f59e0b' stroke-width='24' stroke-linejoin='round' /%3E%3Cg transform='translate(256 256)'%3E%3Ccircle r='70' fill='%23f59e0b' /%3E%3Ccircle r='40' fill='%2318181b' /%3E%3Cpath d='M0 -90 L20 -40' stroke='%2309090b' stroke-width='8' /%3E%3Cpath d='M78 -45 L35 -20' stroke='%2309090b' stroke-width='8' /%3E%3Cpath d='M78 45 L35 20' stroke='%2309090b' stroke-width='8' /%3E%3Cpath d='M0 90 L-20 40' stroke='%2309090b' stroke-width='8' /%3E%3Cpath d='M-78 45 L-35 20' stroke='%2309090b' stroke-width='8' /%3E%3Cpath d='M-78 -45 L-35 -20' stroke='%2309090b' stroke-width='8' /%3E%3C/g%3E%3Ctext x='256' y='470' font-family='monospace' font-size='32' fill='%2371717a' text-anchor='middle' letter-spacing='4'%3EENG.CAM%3C/text%3E%3C/svg%3E">
@@ -123,19 +126,18 @@
             transform-origin: 0 0;
         }
 
-        /* 浮水印旋轉 90 度樣式 
-           left: 3.5rem (56px) 確保翻轉後的文字區塊有足夠的左側空間
-           transform-origin: top left 以左上角為軸心旋轉
-           width: 70vh 確保長度足夠延伸到下方
-        */
+        /* 浮水印旋轉 90 度樣式 */
         .watermark-rotated {
             position: absolute;
-            top: 2rem;
-            left: 3.5rem; 
-            width: 70vh; /* 寬度變成高度，確保不換行 */
+            /* Top 設為 1.5rem (24px) */
+            top: 1.5rem;
+            /* Left 增加到 8.5rem 確保有足夠空間顯示向左延伸的時間文字 */
+            left: 8.5rem; 
+            width: 70vh; 
             transform-origin: top left;
             transform: rotate(90deg);
-            pointer-events: none; /* 讓點擊穿透 */
+            pointer-events: none; 
+            z-index: 20; /* 確保在 Grid (10) 之上，但在控制項 (30) 之下 */
         }
         /* 讓內部按鈕恢復可點擊 */
         .watermark-rotated > * {
@@ -213,56 +215,60 @@
         <!-- ==================== VIEW: CAMERA (Vertical Portrait) ==================== -->
         <div id="view-camera" class="hidden absolute inset-0 z-50 bg-black flex flex-col">
             
-            <!-- Top Controls -->
-            <div class="absolute top-0 left-0 right-0 z-20 p-6 pt-safe flex justify-between items-start pointer-events-none">
-                <button onclick="switchView('dashboard')" class="pointer-events-auto p-2 bg-black/40 backdrop-blur-md rounded-full text-white/80 border border-white/10 mt-2">
-                    <i data-lucide="x" width="24"></i>
-                </button>
-                <div id="ai-status-badge" class="hidden bg-purple-500/20 px-2 py-1 rounded border border-purple-500/50 text-[10px] font-bold text-purple-400 flex items-center gap-1 backdrop-blur-md mt-3 pointer-events-auto">
+            <!-- Top Controls (Overlay z-30) -->
+            <div class="absolute top-0 left-0 right-0 z-30 p-6 pt-safe pointer-events-none">
+                
+                <!-- AI Badge (Left) -->
+                <div id="ai-status-badge" class="hidden absolute top-6 left-6 mt-[env(safe-area-inset-top)] bg-purple-500/20 px-2 py-1 rounded border border-purple-500/50 text-[10px] font-bold text-purple-400 flex items-center gap-1 backdrop-blur-md pointer-events-auto">
                     <i data-lucide="zap" width="10"></i> AI AUTO
                 </div>
+
+                <!-- Close Button (Right) -->
+                <button onclick="switchView('dashboard')" class="absolute top-6 right-6 mt-[env(safe-area-inset-top)] pointer-events-auto p-2 bg-black/40 backdrop-blur-md rounded-full text-white/80 border border-white/10 active:scale-90 transition-transform">
+                    <i data-lucide="x" width="24"></i>
+                </button>
             </div>
 
             <!-- Main Camera Area -->
             <div class="relative flex-1 bg-black overflow-hidden rounded-b-3xl">
-                <video id="camera-feed" class="absolute w-full h-full object-cover" autoplay playsinline muted></video>
+                <video id="camera-feed" class="absolute w-full h-full object-cover z-0" autoplay playsinline muted></video>
                 
-                <!-- HUD: Grid -->
-                <div class="absolute inset-0 opacity-20 pointer-events-none">
+                <!-- HUD: Grid (z-10) -->
+                <div class="absolute inset-0 opacity-20 pointer-events-none z-10">
                     <div class="w-full h-1/3 border-b border-white absolute top-0"></div>
                     <div class="w-full h-2/3 border-b border-white absolute top-0"></div>
                     <div class="h-full w-1/3 border-r border-white absolute top-0 left-0"></div>
                     <div class="h-full w-2/3 border-r border-white absolute top-0 left-0"></div>
                 </div>
 
-                <!-- Info Overlay (Watermark Preview) - Rotated 90 deg at Top Left -->
-                <div class="watermark-rotated overlay-text-shadow flex flex-col gap-1 items-start">
+                <!-- Info Overlay (Watermark Preview) (z-20) -->
+                <div class="watermark-rotated overlay-text-shadow flex flex-col gap-1 items-start z-20">
                     <button onclick="openProjectSelector()" class="flex items-center gap-2 text-left mb-1 group">
-                        <i data-lucide="folder" width="16" class="text-amber-500 -rotate-90"></i>
-                        <!-- Project name font slightly smaller -->
+                        <i data-lucide="folder" width="16" class="text-amber-500"></i>
                         <span id="cam-project-name" class="text-amber-400 font-bold text-lg font-heading uppercase tracking-wide border-b border-dashed border-transparent group-hover:border-amber-500 transition-colors break-all line-clamp-1">DEFAULT</span>
-                        <i data-lucide="chevron-down" width="14" class="text-amber-500/50 -rotate-90"></i>
+                        <i data-lucide="chevron-down" width="14" class="text-amber-500/50"></i>
                     </button>
                     
                     <div class="flex items-start gap-1.5 w-full">
-                        <i data-lucide="map-pin" width="14" class="text-white/90 shrink-0 mt-1 -rotate-90"></i>
+                        <i data-lucide="map-pin" width="14" class="text-white/90 shrink-0 mt-1"></i>
                         <span id="cam-overlay-location" class="text-white text-xs font-mono border-b border-dashed border-white/40 focus:border-amber-500 focus:text-amber-300 transition-colors cursor-text break-words w-full" contenteditable="true" spellcheck="false">Acquiring GPS...</span>
                     </div>
                     
                     <div class="text-white/70 text-[10px] font-mono mt-0.5" id="cam-overlay-coords">GPS: ---</div>
-                    <div class="text-white/50 text-[10px] font-mono" id="cam-overlay-time">0000-00-00 00:00:00</div>
+                    <!-- Time Display (Enhanced) -->
+                    <div class="text-white/90 text-[10px] font-mono font-bold" id="cam-overlay-time">Loading...</div>
                 </div>
                  
-                <!-- Capture Flash Animation -->
-                <div id="flash-overlay" class="absolute inset-0 bg-white opacity-0 pointer-events-none z-50"></div>
+                <!-- Capture Flash Animation (z-40) -->
+                <div id="flash-overlay" class="absolute inset-0 bg-white opacity-0 pointer-events-none z-40"></div>
                 
-                <!-- Quick Toast -->
-                <div id="cam-toast" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/80 border border-white/10 text-white px-4 py-2 rounded-lg backdrop-blur-md hidden z-40 items-center gap-2 shadow-lg">
+                <!-- Quick Toast (z-50) -->
+                <div id="cam-toast" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/80 border border-white/10 text-white px-4 py-2 rounded-lg backdrop-blur-md hidden z-50 items-center gap-2 shadow-lg">
                     <span id="cam-toast-text" class="text-xs font-bold font-mono">SAVED</span>
                 </div>
             </div>
 
-            <!-- Bottom Control Bar (Shutter) -->
+            <!-- Bottom Control Bar (Shutter) (z-30) -->
             <div class="h-32 bg-black flex flex-row items-center justify-around pb-safe pt-4 px-6 shrink-0 z-30">
                 <!-- Gallery -->
                 <div onclick="switchView('gallery')" class="w-12 h-12 rounded-lg bg-dark-800 border border-white/20 overflow-hidden cursor-pointer active:scale-95 transition-transform flex items-center justify-center">
@@ -445,9 +451,38 @@
 
     <canvas id="process-canvas" class="hidden"></canvas>
 
+    <!-- Embedded Service Worker Code -->
+    <script id="sw-code" type="text/worker">
+        const CACHE_NAME = 'eng-cam-v1';
+        self.addEventListener('install', (e) => {
+            e.waitUntil(
+                caches.open(CACHE_NAME).then((cache) => {
+                    return cache.addAll(['./', './index.html']);
+                })
+            );
+        });
+        self.addEventListener('fetch', (e) => {
+            e.respondWith(
+                caches.match(e.request).then((r) => {
+                    return r || fetch(e.request);
+                })
+            );
+        });
+    </script>
+
     <!-- JavaScript -->
     <script>
         lucide.createIcons();
+
+        // --- Register Service Worker via Blob ---
+        if ('serviceWorker' in navigator) {
+            const swCode = document.getElementById('sw-code').textContent;
+            const blob = new Blob([swCode], {type: 'application/javascript'});
+            const swUrl = URL.createObjectURL(blob);
+            navigator.serviceWorker.register(swUrl)
+                .then(reg => console.log('SW Registered!', reg))
+                .catch(err => console.log('SW Failed', err));
+        }
 
         // --- Database ---
         const DB_NAME = 'EngCamDB_V4';
@@ -472,7 +507,8 @@
                 updateOverlayInfo();
                 updateTotalPhotoCount();
                 loadAISettings();
-                processBufferQueue(); 
+                processBufferQueue();
+                updateClockDisplay(); // Ensure clock is updated immediately
             };
             request.onerror = (e) => console.error("DB Error", e);
         }
@@ -1218,14 +1254,17 @@
             };
         }
         
+        function updateClockDisplay() {
+            const now = new Date();
+            const date = now.getFullYear() + '-' + (now.getMonth()+1).toString().padStart(2, '0') + '-' + now.getDate().toString().padStart(2, '0');
+            const time = now.toTimeString().split(' ')[0];
+            const el = document.getElementById('cam-overlay-time');
+            if(el) el.innerText = date + ' ' + time;
+        }
+
         function startClock() {
-            setInterval(() => {
-                const now = new Date();
-                const date = now.getFullYear() + '-' + (now.getMonth()+1).toString().padStart(2, '0') + '-' + now.getDate().toString().padStart(2, '0');
-                const time = now.toTimeString().split(' ')[0];
-                const el = document.getElementById('cam-overlay-time');
-                if(el) el.innerText = date + ' ' + time;
-            }, 1000);
+            updateClockDisplay();
+            setInterval(updateClockDisplay, 1000);
         }
 
         function openFolderDetail(id, name) {
