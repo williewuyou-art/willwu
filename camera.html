@@ -8,6 +8,11 @@
     <meta name="theme-color" content="#000000">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Eng. Cam">
+
+    <!-- 內嵌 SVG Icon (無需外部檔案) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%2327272a;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%2309090b;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='0' y='0' width='512' height='512' rx='120' fill='url(%23grad)' /%3E%3Cpath d='M0 256 H512 M256 0 V512' stroke='%233f3f46' stroke-width='2' opacity='0.3' /%3E%3Cpath d='M256 80 L420 170 V342 L256 432 L92 342 V170 Z' fill='none' stroke='%23f59e0b' stroke-width='24' stroke-linejoin='round' /%3E%3Cg transform='translate(256 256)'%3E%3Ccircle r='70' fill='%23f59e0b' /%3E%3Ccircle r='40' fill='%2318181b' /%3E%3Cpath d='M0 -90 L20 -40' stroke='%2309090b' stroke-width='8' /%3E%3Cpath d='M78 -45 L35 -20' stroke='%2309090b' stroke-width='8' /%3E%3Cpath d='M78 45 L35 20' stroke='%2309090b' stroke-width='8' /%3E%3Cpath d='M0 90 L-20 40' stroke='%2309090b' stroke-width='8' /%3E%3Cpath d='M-78 45 L-35 20' stroke='%2309090b' stroke-width='8' /%3E%3Cpath d='M-78 -45 L-35 -20' stroke='%2309090b' stroke-width='8' /%3E%3C/g%3E%3Ctext x='256' y='470' font-family='monospace' font-size='32' fill='%2371717a' text-anchor='middle' letter-spacing='4'%3EENG.CAM%3C/text%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%2327272a;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%2309090b;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='0' y='0' width='512' height='512' rx='120' fill='url(%23grad)' /%3E%3Cpath d='M0 256 H512 M256 0 V512' stroke='%233f3f46' stroke-width='2' opacity='0.3' /%3E%3Cpath d='M256 80 L420 170 V342 L256 432 L92 342 V170 Z' fill='none' stroke='%23f59e0b' stroke-width='24' stroke-linejoin='round' /%3E%3Cg transform='translate(256 256)'%3E%3Ccircle r='70' fill='%23f59e0b' /%3E%3Ccircle r='40' fill='%2318181b' /%3E%3Cpath d='M0 -90 L20 -40' stroke='%2309090b' stroke-width='8' /%3E%3Cpath d='M78 -45 L35 -20' stroke='%2309090b' stroke-width='8' /%3E%3Cpath d='M78 45 L35 20' stroke='%2309090b' stroke-width='8' /%3E%3Cpath d='M0 90 L-20 40' stroke='%2309090b' stroke-width='8' /%3E%3Cpath d='M-78 45 L-35 20' stroke='%2309090b' stroke-width='8' /%3E%3Cpath d='M-78 -45 L-35 -20' stroke='%2309090b' stroke-width='8' /%3E%3C/g%3E%3Ctext x='256' y='470' font-family='monospace' font-size='32' fill='%2371717a' text-anchor='middle' letter-spacing='4'%3EENG.CAM%3C/text%3E%3C/svg%3E">
 
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -544,15 +549,19 @@
             const video = document.getElementById('camera-feed');
             try {
                 if (videoStream) videoStream.getTracks().forEach(t => t.stop());
+                // FIX: Relaxed constraints to ensure camera opens on more devices
                 videoStream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: facingMode, width: { ideal: 1920 }, height: { ideal: 1080 } },
+                    video: { facingMode: facingMode }, // Removed ideal width/height
                     audio: false
                 });
                 video.srcObject = videoStream;
+                video.onloadedmetadata = () => {
+                    video.play().catch(e => console.error("Play error", e));
+                };
                 hasCameraPerm = true;
             } catch (e) { 
                 console.log("Cam error", e); 
-                alert("Camera Init Failed. Check Permissions.");
+                alert("Camera Init Failed. Check Permissions. (" + e.name + ")");
                 hasCameraPerm = false;
             }
         }
@@ -561,7 +570,6 @@
             if (videoStream) {
                 videoStream.getTracks().forEach(t => t.stop());
                 videoStream = null;
-                // Flash reset logic removed
             }
         }
 
@@ -570,8 +578,6 @@
             facingMode = (facingMode === 'environment') ? 'user' : 'environment';
             startCamera();
         }
-
-        // Removed toggleFlash() and updateFlashUI()
 
         function initGeolocation() {
             if (navigator.geolocation) {
@@ -821,8 +827,8 @@
 
         function drawWatermark(ctx, w, h, tag) {
             const scaleFactor = Math.min(w, h);
-            const baseSize = scaleFactor * 0.035; 
-            const pad = scaleFactor * 0.04;
+            const baseSize = scaleFactor * 0.030; // Slightly smaller font
+            const pad = scaleFactor * 0.05; // Slightly larger padding
             const lineHeight = baseSize * 1.4;
             let currentY = h - pad;
 
@@ -1313,3 +1319,4 @@
     </script>
 </body>
 </html>
+
