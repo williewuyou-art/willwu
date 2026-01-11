@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Eng. Cam">
 
-    <!-- 內嵌 SVG Icon (無需外部檔案) -->
+    <!-- 內嵌 SVG Icon -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%2327272a;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%2309090b;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='0' y='0' width='512' height='512' rx='120' fill='url(%23grad)' /%3E%3Cpath d='M0 256 H512 M256 0 V512' stroke='%233f3f46' stroke-width='2' opacity='0.3' /%3E%3Cpath d='M256 80 L420 170 V342 L256 432 L92 342 V170 Z' fill='none' stroke='%23f59e0b' stroke-width='24' stroke-linejoin='round' /%3E%3Cg transform='translate(256 256)'%3E%3Ccircle r='70' fill='%23f59e0b' /%3E%3Ccircle r='40' fill='%2318181b' /%3E%3Cpath d='M0 -90 L20 -40' stroke='%2309090b' stroke-width='8' /%3E%3Cpath d='M78 -45 L35 -20' stroke='%2309090b' stroke-width='8' /%3E%3Cpath d='M78 45 L35 20' stroke='%2309090b' stroke-width='8' /%3E%3Cpath d='M0 90 L-20 40' stroke='%2309090b' stroke-width='8' /%3E%3Cpath d='M-78 45 L-35 20' stroke='%2309090b' stroke-width='8' /%3E%3Cpath d='M-78 -45 L-35 -20' stroke='%2309090b' stroke-width='8' /%3E%3C/g%3E%3Ctext x='256' y='470' font-family='monospace' font-size='32' fill='%2371717a' text-anchor='middle' letter-spacing='4'%3EENG.CAM%3C/text%3E%3C/svg%3E">
     <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%2327272a;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%2309090b;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='0' y='0' width='512' height='512' rx='120' fill='url(%23grad)' /%3E%3Cpath d='M0 256 H512 M256 0 V512' stroke='%233f3f46' stroke-width='2' opacity='0.3' /%3E%3Cpath d='M256 80 L420 170 V342 L256 432 L92 342 V170 Z' fill='none' stroke='%23f59e0b' stroke-width='24' stroke-linejoin='round' /%3E%3Cg transform='translate(256 256)'%3E%3Ccircle r='70' fill='%23f59e0b' /%3E%3Ccircle r='40' fill='%2318181b' /%3E%3Cpath d='M0 -90 L20 -40' stroke='%2309090b' stroke-width='8' /%3E%3Cpath d='M78 -45 L35 -20' stroke='%2309090b' stroke-width='8' /%3E%3Cpath d='M78 45 L35 20' stroke='%2309090b' stroke-width='8' /%3E%3Cpath d='M0 90 L-20 40' stroke='%2309090b' stroke-width='8' /%3E%3Cpath d='M-78 45 L-35 20' stroke='%2309090b' stroke-width='8' /%3E%3Cpath d='M-78 -45 L-35 -20' stroke='%2309090b' stroke-width='8' /%3E%3C/g%3E%3Ctext x='256' y='470' font-family='monospace' font-size='32' fill='%2371717a' text-anchor='middle' letter-spacing='4'%3EENG.CAM%3C/text%3E%3C/svg%3E">
 
@@ -78,7 +78,6 @@
 
         @media (min-width: 768px) {
             #app-container {
-                /* 還原為直式手機比例 */
                 max-width: 430px;
                 max-height: 900px;
                 height: 95vh;
@@ -122,6 +121,25 @@
         #zoom-container {
             touch-action: none;
             transform-origin: 0 0;
+        }
+
+        /* 浮水印旋轉 90 度樣式 
+           left: 3.5rem (56px) 確保翻轉後的文字區塊有足夠的左側空間
+           transform-origin: top left 以左上角為軸心旋轉
+           width: 70vh 確保長度足夠延伸到下方
+        */
+        .watermark-rotated {
+            position: absolute;
+            top: 2rem;
+            left: 3.5rem; 
+            width: 70vh; /* 寬度變成高度，確保不換行 */
+            transform-origin: top left;
+            transform: rotate(90deg);
+            pointer-events: none; /* 讓點擊穿透 */
+        }
+        /* 讓內部按鈕恢復可點擊 */
+        .watermark-rotated > * {
+            pointer-events: auto;
         }
     </style>
 </head>
@@ -192,77 +210,74 @@
             </main>
         </div>
 
-        <!-- ==================== VIEW: CAMERA (Landscape Mode Layout) ==================== -->
-        <!-- 使用 flex-row 確保橫向佈局 (左側畫面，右側控制列) -->
-        <div id="view-camera" class="hidden absolute inset-0 z-50 bg-black flex flex-row">
+        <!-- ==================== VIEW: CAMERA (Vertical Portrait) ==================== -->
+        <div id="view-camera" class="hidden absolute inset-0 z-50 bg-black flex flex-col">
             
+            <!-- Top Controls -->
+            <div class="absolute top-0 left-0 right-0 z-20 p-6 pt-safe flex justify-between items-start pointer-events-none">
+                <button onclick="switchView('dashboard')" class="pointer-events-auto p-2 bg-black/40 backdrop-blur-md rounded-full text-white/80 border border-white/10 mt-2">
+                    <i data-lucide="x" width="24"></i>
+                </button>
+                <div id="ai-status-badge" class="hidden bg-purple-500/20 px-2 py-1 rounded border border-purple-500/50 text-[10px] font-bold text-purple-400 flex items-center gap-1 backdrop-blur-md mt-3 pointer-events-auto">
+                    <i data-lucide="zap" width="10"></i> AI AUTO
+                </div>
+            </div>
+
             <!-- Main Camera Area -->
-            <div class="relative flex-1 bg-black h-full overflow-hidden">
+            <div class="relative flex-1 bg-black overflow-hidden rounded-b-3xl">
                 <video id="camera-feed" class="absolute w-full h-full object-cover" autoplay playsinline muted></video>
                 
-                <!-- Top Bar (in Camera Area) -->
-                <div class="absolute top-0 left-0 right-0 z-20 p-4 flex justify-between items-start bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
-                     <button onclick="switchView('dashboard')" class="pointer-events-auto p-2 bg-black/40 backdrop-blur-md rounded-full text-white/80 border border-white/10 mt-safe">
-                        <i data-lucide="x" width="24"></i>
-                    </button>
-                    <div id="ai-status-badge" class="hidden bg-purple-500/20 px-2 py-1 rounded border border-purple-500/50 text-[10px] font-bold text-purple-400 flex items-center gap-1 mt-safe pointer-events-auto">
-                        <i data-lucide="zap" width="10"></i> AI AUTO
-                    </div>
-                </div>
-
                 <!-- HUD: Grid -->
                 <div class="absolute inset-0 opacity-20 pointer-events-none">
                     <div class="w-full h-1/3 border-b border-white absolute top-0"></div>
                     <div class="w-full h-2/3 border-b border-white absolute top-0"></div>
                     <div class="h-full w-1/3 border-r border-white absolute top-0 left-0"></div>
                     <div class="h-full w-2/3 border-r border-white absolute top-0 left-0"></div>
-                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-amber-500/50 rounded-full"></div>
                 </div>
 
-                <!-- Info Overlay -->
-                <div class="absolute bottom-4 left-6 z-10 w-3/4 mb-safe overlay-text-shadow flex flex-col gap-1 items-start">
-                    <button onclick="openProjectSelector()" class="flex items-center gap-2 text-left mb-2 group pointer-events-auto">
-                        <i data-lucide="folder" width="16" class="text-amber-500"></i>
-                        <span id="cam-project-name" class="text-amber-400 font-bold text-xl font-heading uppercase tracking-wide border-b border-dashed border-transparent group-hover:border-amber-500 transition-colors break-all line-clamp-1">DEFAULT</span>
-                        <i data-lucide="chevron-down" width="14" class="text-amber-500/50"></i>
+                <!-- Info Overlay (Watermark Preview) - Rotated 90 deg at Top Left -->
+                <div class="watermark-rotated overlay-text-shadow flex flex-col gap-1 items-start">
+                    <button onclick="openProjectSelector()" class="flex items-center gap-2 text-left mb-1 group">
+                        <i data-lucide="folder" width="16" class="text-amber-500 -rotate-90"></i>
+                        <!-- Project name font slightly smaller -->
+                        <span id="cam-project-name" class="text-amber-400 font-bold text-lg font-heading uppercase tracking-wide border-b border-dashed border-transparent group-hover:border-amber-500 transition-colors break-all line-clamp-1">DEFAULT</span>
+                        <i data-lucide="chevron-down" width="14" class="text-amber-500/50 -rotate-90"></i>
                     </button>
                     
-                    <div class="flex items-start gap-1.5 pointer-events-auto w-full">
-                        <i data-lucide="map-pin" width="14" class="text-white/90 shrink-0 mt-1"></i>
-                        <span id="cam-overlay-location" class="text-white text-sm font-mono border-b border-dashed border-white/40 focus:border-amber-500 focus:text-amber-300 transition-colors cursor-text break-words w-full" contenteditable="true" spellcheck="false">Acquiring GPS...</span>
+                    <div class="flex items-start gap-1.5 w-full">
+                        <i data-lucide="map-pin" width="14" class="text-white/90 shrink-0 mt-1 -rotate-90"></i>
+                        <span id="cam-overlay-location" class="text-white text-xs font-mono border-b border-dashed border-white/40 focus:border-amber-500 focus:text-amber-300 transition-colors cursor-text break-words w-full" contenteditable="true" spellcheck="false">Acquiring GPS...</span>
                     </div>
                     
-                    <div class="text-white/70 text-xs font-mono mt-1" id="cam-overlay-coords">GPS: ---</div>
+                    <div class="text-white/70 text-[10px] font-mono mt-0.5" id="cam-overlay-coords">GPS: ---</div>
                     <div class="text-white/50 text-[10px] font-mono" id="cam-overlay-time">0000-00-00 00:00:00</div>
                 </div>
                  
-                <!-- Capture Flash Animation Only (No Button) -->
+                <!-- Capture Flash Animation -->
                 <div id="flash-overlay" class="absolute inset-0 bg-white opacity-0 pointer-events-none z-50"></div>
                 
                 <!-- Quick Toast -->
-                <div id="cam-toast" class="absolute top-20 left-1/2 -translate-x-1/2 bg-black/80 border border-white/10 text-white px-4 py-2 rounded-lg backdrop-blur-md hidden z-40 items-center gap-2 shadow-lg mt-safe">
+                <div id="cam-toast" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/80 border border-white/10 text-white px-4 py-2 rounded-lg backdrop-blur-md hidden z-40 items-center gap-2 shadow-lg">
                     <span id="cam-toast-text" class="text-xs font-bold font-mono">SAVED</span>
                 </div>
             </div>
 
-            <!-- Right Control Bar (Landscape Style) -->
-            <div class="w-24 bg-black/90 backdrop-blur-md border-l border-white/10 flex flex-col items-center justify-between py-8 z-30 shrink-0 pb-safe pt-safe">
-                <!-- Top Controls (Flash button removed) -->
-                <div class="flex flex-col gap-4">
-                    <button onclick="flipCamera()" class="p-3 bg-white/5 rounded-full text-white/80 border border-white/10 active:rotate-180 transition-all duration-500">
-                        <i data-lucide="refresh-cw" width="20"></i>
-                    </button>
+            <!-- Bottom Control Bar (Shutter) -->
+            <div class="h-32 bg-black flex flex-row items-center justify-around pb-safe pt-4 px-6 shrink-0 z-30">
+                <!-- Gallery -->
+                <div onclick="switchView('gallery')" class="w-12 h-12 rounded-lg bg-dark-800 border border-white/20 overflow-hidden cursor-pointer active:scale-95 transition-transform flex items-center justify-center">
+                    <i data-lucide="image" class="text-white/50" width="24"></i>
                 </div>
 
-                <!-- Shutter (Center) -->
-                <button onclick="capturePhoto()" class="w-16 h-16 rounded-full border-4 border-white flex items-center justify-center active:scale-95 transition-transform hover:bg-white/10">
-                    <div class="w-14 h-14 bg-white rounded-full shadow-lg"></div>
+                <!-- Shutter -->
+                <button onclick="capturePhoto()" class="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center active:scale-95 transition-transform hover:bg-white/10">
+                    <div class="w-16 h-16 bg-white rounded-full shadow-lg"></div>
                 </button>
 
-                <!-- Bottom/Gallery -->
-                 <div onclick="switchView('gallery')" class="w-12 h-12 rounded-lg bg-dark-800 border border-white/20 overflow-hidden cursor-pointer active:scale-95 transition-transform flex items-center justify-center">
-                    <i data-lucide="image" class="text-white/50" width="20"></i>
-                </div>
+                <!-- Flip -->
+                <button onclick="flipCamera()" class="p-3 bg-white/10 rounded-full text-white/80 border border-white/10 active:rotate-180 transition-all duration-500 w-12 h-12 flex items-center justify-center">
+                    <i data-lucide="refresh-cw" width="20"></i>
+                </button>
             </div>
         </div>
 
@@ -827,56 +842,195 @@
 
         function drawWatermark(ctx, w, h, tag) {
             const scaleFactor = Math.min(w, h);
-            const baseSize = scaleFactor * 0.030; // Slightly smaller font
-            const pad = scaleFactor * 0.05; // Slightly larger padding
-            const lineHeight = baseSize * 1.4;
-            let currentY = h - pad;
-
-            ctx.shadowColor = "rgba(0,0,0,0.9)";
-            ctx.shadowBlur = 4;
-            ctx.shadowOffsetX = 2; ctx.shadowOffsetY = 2;
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'bottom';
+            // Smaller font size
+            const baseSize = scaleFactor * 0.025; 
+            const pad = scaleFactor * 0.05; 
+            const lineHeight = baseSize * 1.5;
             
-            const drawMultiLine = (text, x, y, color, fontStyle = '') => {
-                ctx.fillStyle = color;
-                ctx.font = `${fontStyle} ${baseSize}px monospace`;
-                const maxTextWidth = w - (pad * 2);
+            ctx.save();
+            
+            // Collect text lines first
+            const lines = [];
+            const projName = document.getElementById('cam-project-name').innerText;
+            const loc = document.getElementById('cam-overlay-location').innerText;
+            const gps = document.getElementById('cam-overlay-coords').innerText;
+            const time = document.getElementById('cam-overlay-time').innerText;
+            
+            // Helper to wrap text
+            const getWrappedLines = (text, maxWidth) => {
+                const result = [];
+                ctx.font = `bold ${baseSize}px monospace`; // Measure with broad font
                 const chars = text.split('');
                 let line = '';
-                const lines = [];
-
                 for (let n = 0; n < chars.length; n++) {
                     const testLine = line + chars[n];
                     const metrics = ctx.measureText(testLine);
-                    if (metrics.width > maxTextWidth && n > 0) {
-                        lines.push(line);
+                    if (metrics.width > maxWidth && n > 0) {
+                        result.push(line);
                         line = chars[n];
                     } else {
                         line = testLine;
                     }
                 }
-                lines.push(line);
-
-                let drawY = y;
-                for (let i = lines.length - 1; i >= 0; i--) {
-                    ctx.fillText(lines[i], x, drawY);
-                    drawY -= lineHeight;
-                }
-                return drawY; 
+                result.push(line);
+                return result;
             };
 
-            const gps = document.getElementById('cam-overlay-coords').innerText;
-            const time = document.getElementById('cam-overlay-time').innerText;
-            currentY = drawMultiLine(`${gps} | ${time}`, pad, currentY, 'rgba(255,255,255,0.9)');
-            currentY -= (lineHeight * 0.5); 
+            // Max width becomes height - padding
+            const maxTextWidth = h - (pad * 2);
 
-            const loc = document.getElementById('cam-overlay-location').innerText;
-            currentY = drawMultiLine(loc, pad, currentY, 'white');
-            currentY -= (lineHeight * 0.5); 
+            lines.push(...getWrappedLines(projName, maxTextWidth));
+            lines.push(...getWrappedLines(loc, maxTextWidth));
+            lines.push(...getWrappedLines(`${gps} | ${time}`, maxTextWidth));
 
-            const projName = document.getElementById('cam-project-name').innerText;
-            drawMultiLine(projName, pad, currentY, '#f59e0b', 'bold');
+            // Calculate total width of the text block (which is height in rotated space)
+            // But we actually need to just start from Left-Top.
+            
+            // Rotate 90 degrees clockwise around (pad, pad)
+            // Position: Left Top.
+            // Move origin to allow text to flow down and left?
+            // Rotated 90: +X points Down. +Y points Left.
+            // If we start at (pad + totalLinesHeight, pad)
+            
+            const totalTextHeight = lines.length * lineHeight;
+            
+            // Translate to top-left area, but offset X to fit the lines stacking leftwards
+            ctx.translate(pad + totalTextHeight, pad);
+            ctx.rotate(90 * Math.PI / 180);
+
+            ctx.shadowColor = "rgba(0,0,0,0.9)";
+            ctx.shadowBlur = 4;
+            ctx.shadowOffsetX = 2; ctx.shadowOffsetY = 2;
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top'; 
+            
+            let drawY = 0; // Relative Y (which is Screen Left)
+            
+            // Draw lines
+            // Since +Y is Left, and we want Line 1 to be right-most (Top visually if sideways),
+            // We iterate.
+            // Actually, if we rotate 90 deg clockwise:
+            // (0,0) -> Text goes Down screen.
+            // (0, 10) -> Text goes Down screen, 10px Left.
+            // So lines[0] should be at y=0. lines[1] at y=lineHeight.
+            
+            // Colors
+            const colors = ['#f59e0b', 'white', 'rgba(255,255,255,0.9)'];
+            
+            // Re-wrap/distribute logic simplistic here for coloring
+            // We know roughly: 1st block is proj, 2nd loc, 3rd time
+            // Let's just redraw based on data to get colors right
+            
+            let lineIdx = 0;
+            
+            const drawLinesWithColor = (textArr, color, fontStyle='') => {
+                ctx.fillStyle = color;
+                ctx.font = `${fontStyle} ${baseSize}px monospace`;
+                textArr.forEach(l => {
+                    // Because +Y is Left, and we want the first line to be the "Top" one (Rightmost on screen),
+                    // wait.
+                    // If rotated 90 deg:
+                    // Axis X: Down. Axis Y: Left.
+                    // Line 0 at y=0 is Rightmost.
+                    // Line 1 at y=LH is Left of Line 0.
+                    // This creates a stack growing to the Left.
+                    // If we translated to (pad + totalHeight, pad), we are fine.
+                    // But standard English reads Top-to-Bottom.
+                    // If we hold phone sideways (shutter right), the "Top" is the screen Left.
+                    // So lines should stack from Screen Left to Screen Right.
+                    // i.e. Line 0 is Leftmost. Line 1 is Right of it.
+                    // Rotate 90 deg clockwise:
+                    // To stack from Left to Right (on rotated view):
+                    // That implies stacking along -Y (Right).
+                    // So we should start at y = totalHeight and decrement?
+                    
+                    // Let's stick to the user request: "Rotate right 90 degrees".
+                    // Usually this means the text base is vertical.
+                    // Visual:
+                    // P
+                    // r
+                    // o
+                    // j
+                    // If I read this, I tilt my head left.
+                    // Top line is "Proj". Bottom line is "Loc".
+                    // "Proj" is to the Left of "Loc"? Or Top?
+                    // Standard document: Line 1 Top, Line 2 Bottom.
+                    // Rotate 90 CW: Line 1 Right, Line 2 Left.
+                    
+                    // User said: "Place in Top Left".
+                    // If Line 1 is Rightmost, and we anchor at Top Left...
+                    // Line 1 is far from edge?
+                    // We probably want Line 1 (Proj) to be the "Top" line in the rotated frame.
+                    // Which is the Rightmost line in the unrotated frame.
+                    
+                    // Let's assume standard "Landscape on Portrait" watermark.
+                    // When you view the photo on a PC (landscape), the watermark is in the top-left.
+                    // In portrait source, that is Top-Left corner, text running down.
+                    // Lines stacking to the Right.
+                    // i.e. Line 1 is Leftmost. Line 2 is Right of it.
+                    // Rotate 90 CW:
+                    // Line 1 starts at (0,0) runs down.
+                    // Line 2 starts at (0, -20) (Right... wait -Y is Right? No +Y is Left).
+                    // So to stack Right (screen), we need -Y (relative).
+                    
+                    // Let's adjust translation to (pad, pad).
+                    // Line 0 at y=0.
+                    // Line 1 at y=-lineHeight (Right).
+                    // This puts Line 1 outside if we start at pad.
+                    // So we start at (pad, pad).
+                    // Draw Line 0 at y=0 (Leftmost).
+                    // Draw Line 1 at y=-lineHeight.
+                    // Wait, this is getting confusing.
+                    
+                    // Let's use the standard "Vertical text" logic:
+                    // Lines stack from Left to Right (Screen).
+                    // Start X (Screen) = pad.
+                    // Start Y (Screen) = pad.
+                    // Line 1: X=pad.
+                    // Line 2: X=pad + LH.
+                    
+                    // To achieve this with Rotate 90:
+                    // Translate(pad, pad). Rotate 90.
+                    // Text runs down (Screen X).
+                    // To move Screen Right (Screen +X?), we need ...
+                    // Wait, rotated X is Screen Y. Rotated Y is Screen -X.
+                    // So to move Screen Right (+X), we need -Y (Rotated).
+                    
+                    // So:
+                    // Translate (pad, pad).
+                    // Rotate 90.
+                    // Line 0 at y=0.
+                    // Line 1 at y=-LH.
+                    // This stacks to the Right.
+                    // BUT `fillText` draws text relative to baseline.
+                    // `textAlign = left`.
+                    // If we do this, text starts at pad, runs down.
+                    // Line 0 is at pad.
+                    // Line 1 is at pad + width (Screen).
+                    
+                    // This seems to match "Landscape watermark on portrait photo".
+                    
+                    ctx.fillText(l, 0, drawY);
+                    drawY -= lineHeight; // Move "Up" in rotated space = "Right" in screen space
+                });
+            };
+            
+            // We need to determine the starting Y (relative) to stack correctly.
+            // If we want Line 1 (Proj) to be the "Top" (Leftmost on screen),
+            // and Line 3 (Date) to be "Bottom" (Rightmost on screen).
+            // Then drawY starts at 0, and decrements?
+            // 0 -> Screen Left.
+            // -10 -> Screen Right.
+            // So Proj is Leftmost.
+            
+            // Draw Proj
+            drawLinesWithColor(getWrappedLines(projName, maxTextWidth), '#f59e0b', 'bold');
+            // Draw Loc
+            drawLinesWithColor(getWrappedLines(loc, maxTextWidth), 'white');
+            // Draw GPS
+            drawLinesWithColor(getWrappedLines(`${gps} | ${time}`, maxTextWidth), 'rgba(255,255,255,0.9)');
+            
+            ctx.restore();
         }
 
         async function exportCurrentFolder() {
@@ -920,7 +1074,7 @@
             const t = document.getElementById('cam-toast');
             const txt = document.getElementById('cam-toast-text');
             txt.innerText = msg;
-            t.className = `absolute top-20 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg backdrop-blur-md flex items-center shadow-lg z-50 ${isError ? 'bg-red-900/80 text-white' : 'bg-black/80 text-white border border-white/10'}`;
+            t.className = `absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 px-4 py-2 rounded-lg backdrop-blur-md flex items-center shadow-lg z-50 ${isError ? 'bg-red-900/80 text-white' : 'bg-black/80 text-white border border-white/10'}`;
             t.classList.remove('hidden');
             setTimeout(() => t.classList.add('hidden'), 2000);
         }
@@ -1319,4 +1473,3 @@
     </script>
 </body>
 </html>
-
